@@ -1,0 +1,177 @@
+name: Terraform DevSecOps Pipeline
+
+on:
+  push:
+    branches:
+      - feature
+      - main
+
+permissions:
+  contents: write
+  pull-requests: write
+
+env:
+  TF_WORKING_DIR: .
+
+jobs:
+
+  # ==========================================
+  # FEATURE BRANCH
+  # Security Scan + Terraform Plan + PR
+  # ==========================================
+  feature-plan:
+
+    if: github.ref == 'refs/heads/feature'
+
+    runs-on: ubuntu-latest
+
+    steps:
+
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      # ==========================================
+      # Azure Login using GitHub Secrets
+      # ==========================================
+      - name: Azure Login
+        uses: azure/login@v2
+        with:
+          creds: |
+            {
+              "clientId": "7a8e96d0-1e46-4e44-8553-7598eef4f67e",
+              "clientSecret": "PR58Q~cL6NhdMfvNmgSm.qm8OX6qCQy~7cP47cy0",
+              "subscriptionId": "2eeb0869-d474-4f94-a0b0-fb6a5d23d142",
+              "tenantId": "093e9319-5648-4618-8c7d-f585fb2ed3f9"
+            }
+
+      # ==========================================
+      # Terraform Setup
+      # ==========================================
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.9.8
+
+      # ==========================================
+      # Terraform Init
+      # ==========================================
+      - name: Terraform Init
+        working-directory: ${{ env.TF_WORKING_DIR }}
+        run: terraform init
+
+      # ==========================================
+      # Terraform Validate
+      # ==========================================
+      - name: Terraform Validate
+        working-directory: ${{ env.TF_WORKING_DIR }}
+        run: terraform validate
+
+      # ==========================================
+      # TFLint
+      # ==========================================
+      - name: Setup TFLint
+        uses: terraform-linters/setup-tflint@v5
+
+      - name: Run TFLint
+        working-directory: ${{ env.TF_WORKING_DIR }}
+        run: |
+          tflint --init
+          tflint
+
+      # ==========================================
+      # Terraform Security Scan
+      # ==========================================
+      - name: Trivy Terraform Security Scan
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: config
+          scan-ref: .
+          severity: HIGH,CRITICAL
+          exit-code: 1
+
+      # ==========================================
+      # Terraform Plan
+      # ==========================================
+      - name: Terraform Plan
+        working-directory: ${{ env.TF_WORKING_DIR }}
+        run: terraform plan
+
+      # ==========================================
+      # Create Pull Request
+      # ==========================================
+      - name: Create Pull Request
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh pr create \
+            --base main \
+            --head feature \
+            --title "Terraform Changes: feature → main" \
+            --body "Automated PR created after successful Terraform Plan." \
+            || echo "PR already exists."
+
+
+  # ==========================================
+  # MAIN BRANCH
+  # Plan + Apply
+  # ==========================================
+  main-apply:
+
+    if: github.ref == 'refs/heads/main'
+
+    runs-on: ubuntu-latest
+
+    steps:
+
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      # ==========================================
+      # Azure Login using GitHub Secrets
+      # ==========================================
+      - name: Azure Login
+        uses: azure/login@v2
+        with:
+          creds: |
+            {
+              "clientId": "7a8e96d0-1e46-4e44-8553-7598eef4f67e",
+              "clientSecret": "PR58Q~cL6NhdMfvNmgSm.qm8OX6qCQy~7cP47cy0",
+              "subscriptionId": "2eeb0869-d474-4f94-a0b0-fb6a5d23d142",
+              "tenantId": "093e9319-5648-4618-8c7d-f585fb2ed3f9"
+            }
+
+      # ==========================================
+      # Terraform Setup
+      # ==========================================
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.9.8
+
+      # ==========================================
+      # Terraform Init
+      # ==========================================
+      - name: Terraform Init
+        working-directory: ${{ env.TF_WORKING_DIR }}
+        run: terraform init
+
+      # ==========================================
+      # Terraform Validate
+      # ==========================================
+      - name: Terraform Validate
+        working-directory: ${{ env.TF_WORKING_DIR }}
+        run: terraform validate
+
+      # ==========================================
+      # Terraform Plan
+      # ==========================================
+      - name: Terraform Plan
+        working-directory: ${{ env.TF_WORKING_DIR }}
+        run: terraform plan
+
+      # ==========================================
+      # Terraform Apply
+      # ==========================================
+      - name: Terraform Apply
+        working-directory: ${{ env.TF_WORKING_DIR }}
+        run: terraform apply -auto-approve
