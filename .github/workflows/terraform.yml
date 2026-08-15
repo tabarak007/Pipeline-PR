@@ -11,7 +11,7 @@ permissions:
   pull-requests: write
 
 env:
-  TF_WORKING_DIR: .
+  TF_WORKING_DIR: ./Environment
 
 jobs:
 
@@ -93,7 +93,7 @@ jobs:
       # Terraform Plan
       # ==========================================
       - name: Terraform Plan
-        working-directory: ${{ env.TF_WORKING_DIR }}
+        working-directory: ./Environment
         run: terraform plan
 
       # ==========================================
@@ -166,12 +166,12 @@ jobs:
       # Terraform Plan
       # ==========================================
       - name: Terraform Plan
-        working-directory: ${{ env.TF_WORKING_DIR }}
+        working-directory: ./Environment
         run: terraform plan
 
       # ==========================================
       # Terraform Apply
       # ==========================================
       - name: Terraform Apply
-        working-directory: ${{ env.TF_WORKING_DIR }}
+        working-directory: ./Environment
         run: terraform apply -auto-approve
