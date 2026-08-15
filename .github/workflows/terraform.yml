@@ -15,10 +15,10 @@ env:
 
 jobs:
 
-  # ==========================================
+  # ==================================================
   # FEATURE BRANCH
   # Security Scan + Terraform Plan + PR
-  # ==========================================
+  # ==================================================
   feature-plan:
 
     if: github.ref == 'refs/heads/feature'
@@ -30,9 +30,23 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v4
 
-      # ==========================================
-      # Azure Login using GitHub Secrets
-      # ==========================================
+      # -----------------------------------------------
+      # Debug Repository Structure
+      # -----------------------------------------------
+      - name: Debug Repository Structure
+        run: |
+          echo "Current directory:"
+          pwd
+
+          echo "Repository root:"
+          ls -la
+
+          echo "Environment directory:"
+          ls -la ./Environment
+
+      # -----------------------------------------------
+      # Azure Login
+      # -----------------------------------------------
       - name: Azure Login
         uses: azure/login@v2
         with:
@@ -44,31 +58,31 @@ jobs:
               "tenantId": "093e9319-5648-4618-8c7d-f585fb2ed3f9"
             }
 
-      # ==========================================
+      # -----------------------------------------------
       # Terraform Setup
-      # ==========================================
+      # -----------------------------------------------
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
         with:
           terraform_version: 1.9.8
 
-      # ==========================================
+      # -----------------------------------------------
       # Terraform Init
-      # ==========================================
+      # -----------------------------------------------
       - name: Terraform Init
         working-directory: ${{ env.TF_WORKING_DIR }}
         run: terraform init
 
-      # ==========================================
+      # -----------------------------------------------
       # Terraform Validate
-      # ==========================================
+      # -----------------------------------------------
       - name: Terraform Validate
         working-directory: ${{ env.TF_WORKING_DIR }}
         run: terraform validate
 
-      # ==========================================
+      # -----------------------------------------------
       # TFLint
-      # ==========================================
+      # -----------------------------------------------
       - name: Setup TFLint
         uses: terraform-linters/setup-tflint@v5
 
@@ -78,27 +92,27 @@ jobs:
           tflint --init
           tflint
 
-      # ==========================================
-      # Terraform Security Scan
-      # ==========================================
+      # -----------------------------------------------
+      # Trivy Security Scan
+      # -----------------------------------------------
       - name: Trivy Terraform Security Scan
         uses: aquasecurity/trivy-action@master
         with:
           scan-type: config
-          scan-ref: .
+          scan-ref: ./Environment
           severity: HIGH,CRITICAL
           exit-code: 1
 
-      # ==========================================
+      # -----------------------------------------------
       # Terraform Plan
-      # ==========================================
+      # -----------------------------------------------
       - name: Terraform Plan
-        working-directory: ./Environment
+        working-directory: ${{ env.TF_WORKING_DIR }}
         run: terraform plan
 
-      # ==========================================
+      # -----------------------------------------------
       # Create Pull Request
-      # ==========================================
+      # -----------------------------------------------
       - name: Create Pull Request
         env:
           GH_TOKEN: ${{ github.token }}
@@ -111,10 +125,10 @@ jobs:
             || echo "PR already exists."
 
 
-  # ==========================================
+  # ==================================================
   # MAIN BRANCH
   # Plan + Apply
-  # ==========================================
+  # ==================================================
   main-apply:
 
     if: github.ref == 'refs/heads/main'
@@ -126,9 +140,23 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v4
 
-      # ==========================================
-      # Azure Login using GitHub Secrets
-      # ==========================================
+      # -----------------------------------------------
+      # Debug Repository Structure
+      # -----------------------------------------------
+      - name: Debug Repository Structure
+        run: |
+          echo "Current directory:"
+          pwd
+
+          echo "Repository root:"
+          ls -la
+
+          echo "Environment directory:"
+          ls -la ./Environment
+
+      # -----------------------------------------------
+      # Azure Login
+      # -----------------------------------------------
       - name: Azure Login
         uses: azure/login@v2
         with:
@@ -140,38 +168,38 @@ jobs:
               "tenantId": "093e9319-5648-4618-8c7d-f585fb2ed3f9"
             }
 
-      # ==========================================
+      # -----------------------------------------------
       # Terraform Setup
-      # ==========================================
+      # -----------------------------------------------
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
         with:
           terraform_version: 1.9.8
 
-      # ==========================================
+      # -----------------------------------------------
       # Terraform Init
-      # ==========================================
+      # -----------------------------------------------
       - name: Terraform Init
         working-directory: ${{ env.TF_WORKING_DIR }}
         run: terraform init
 
-      # ==========================================
+      # -----------------------------------------------
       # Terraform Validate
-      # ==========================================
+      # -----------------------------------------------
       - name: Terraform Validate
         working-directory: ${{ env.TF_WORKING_DIR }}
         run: terraform validate
 
-      # ==========================================
+      # -----------------------------------------------
       # Terraform Plan
-      # ==========================================
+      # -----------------------------------------------
       - name: Terraform Plan
-        working-directory: ./Environment
+        working-directory: ${{ env.TF_WORKING_DIR }}
         run: terraform plan
 
-      # ==========================================
+      # -----------------------------------------------
       # Terraform Apply
-      # ==========================================
+      # -----------------------------------------------
       - name: Terraform Apply
-        working-directory: ./Environment
+        working-directory: ${{ env.TF_WORKING_DIR }}
         run: terraform apply -auto-approve
