@@ -11,7 +11,7 @@ permissions:
   pull-requests: write
 
 env:
-  TF_WORKING_DIR: ./Environment
+  TF_WORKING_DIR: ./Enviroment
 
 jobs:
 
@@ -41,7 +41,7 @@ jobs:
           echo "Repository root:"
           ls -la
 
-          echo "Environment directory:"
+          echo "Enviroment directory:"
           ls -la ./Environment
 
       # -----------------------------------------------
@@ -151,8 +151,8 @@ jobs:
           echo "Repository root:"
           ls -la
 
-          echo "Environment directory:"
-          ls -la ./Environment
+          echo "Enviroment directory:"
+          ls -la ./Enviroment
 
       # -----------------------------------------------
       # Azure Login
