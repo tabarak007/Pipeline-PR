@@ -42,7 +42,7 @@ jobs:
           ls -la
 
           echo "Enviroment directory:"
-          ls -la ./Environment
+          ls -la ./Enviroment
 
       # -----------------------------------------------
       # Azure Login
